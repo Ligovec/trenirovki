@@ -57,6 +57,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);back
 .setr{display:flex;align-items:center;gap:8px;margin-top:10px}
 .setr .i{width:26px;height:26px;border-radius:50%;background:var(--card2);color:var(--tx2);font:600 12px/26px var(--fh);text-align:center;flex:none}
 .setr .x{color:var(--tx3);font-weight:700}
+.setr .i.on{background:var(--ac);color:var(--on)}
+.setr .hd{width:76px;text-align:center}
 .ck{width:48px;min-width:48px;height:46px;padding:0;border-radius:14px;font-size:20px;color:var(--tx3);background:var(--card2);border-color:transparent}
 .ck.on{background:var(--ac);color:var(--on)}
 .chip{min-width:46px;height:46px;padding:0 12px;border-radius:14px;background:var(--card2);border-color:transparent;font-family:var(--fh);font-size:14px}
@@ -340,11 +342,11 @@ function rWorkout() {
   const all = slotsOf(o, s);
   let dn = 0, tn = 0;
   for (const sl of all) { const e = s.e[sl.id]; if (!e) { tn += sl.sets; continue; }
-    if (e.rows || sl.acc) { tn += Math.max(e.sets.length, sl.sets); dn += e.sets.filter(x => x.d).length; } else { tn += Math.max(e.c.length, sl.sets); dn += e.c.filter(Boolean).length; } }
+    tn += Math.max(e.sets.length, sl.sets); dn += e.sets.filter(x => num(x.r) > 0).length; }
   let h = `<div class="row sp" style="margin-top:2px"><button class="ghost" data-a="back" style="padding-left:0">‹ Неделя ${w.n}</button><span class="sm">${s.by ? 'вносит: ' + esc((S.profiles[s.by] || {}).name || '') : ''}</span></div>
     ${o.free ? `<p class="lbl">Своя тренировка</p><input data-i="stitle" value="${esc(s.title || '')}" placeholder="Название: турник, растяжка…" style="font:600 20px var(--fh);margin-top:6px">` : `<p class="lbl">${esc(o.name)}</p><h1>${esc(o.focus || o.name)}</h1>`}
     <div class="bar" style="margin-top:10px"><i style="width:${tn ? Math.round(dn / tn * 100) : 0}%"></i></div>
-    <p class="sm" style="margin-top:6px">Подходов отмечено: ${dn} из ${tn}</p>
+    <p class="sm" style="margin-top:6px">Подходов записано: ${dn} из ${tn}</p>
     <div class="seg t" style="margin:14px 0 10px">${Object.keys(TYPES).map(k => `<button data-a="stype" data-v="${k}" class="${s.type === k ? 'on ' + k : ''}">${TYPES[k]}</button>`).join('')}</div>
     <div class="row"><span class="mut" style="width:48px">Дата</span><input type="date" data-i="sdate" value="${esc(s.date)}" style="max-width:200px"></div>`;
   const acc = all.filter(x => x.acc), rest = all.filter(x => !x.acc);
@@ -358,7 +360,7 @@ function rWorkout() {
 }
 function entry(s, pl, sl) {
   let e = s.e[sl.id];
-  if (!e) { const t = (pl.t || {})[sl.id]; e = {ex: (t && t.ex) || sl.ex, sets: [], w: '', c: [], note: '', rows: !!sl.acc}; }
+  if (!e) { const t = (pl.t || {})[sl.id]; e = {ex: (t && t.ex) || sl.ex, sets: [], w: '', c: [], note: '', rows: true}; }
   return e;
 }
 function rSlot(p, w, wi, o, s, pl, sl) {
@@ -376,28 +378,21 @@ function rSlot(p, w, wi, o, s, pl, sl) {
   const head = `<div class="row sp" style="align-items:flex-start"><button class="exn g1" data-a="pick" data-v="${sl.id}" aria-label="Заменить упражнение"><span class="g1">${esc(ex.name)}</span><span class="sw">${SWAP}</span></button>
     ${tt && (tt.w || tt.r) ? `<span class="tgt">${esc(tgt(tt))}</span>` : `<span class="pill nt">${sl.sets} × ${sl.rmin}–${sl.rmax}</span>`}</div>`;
   let body = '';
-  const rows = e.rows || sl.acc;
-  if (rows) {
-    const n = Math.max(e.sets.length, (tt && num(tt.s)) || 0, (!e.sets.length && ref && ref.sets.length) || 0, sl.sets);
-    for (let i = 0; i < n; i++) {
-      const x = e.sets[i] || {w: '', r: '', d: false};
-      const rs = ref && ref.sets.length ? (ref.sets[i] || ref.sets[ref.sets.length - 1]) : null;
-      const phw = tt && tt.w ? fw(num(tt.w)) : rs && !isNaN(rs.w) ? fw(rs.w) : 'кг';
-      const phr = tt && tt.r ? tt.r : rs ? rs.r : sl.rmin + '–' + sl.rmax;
-      body += `<div class="setr"><span class="i">${i + 1}</span>
-        <input class="num" inputmode="decimal" data-i="sw" data-s="${sl.id}" data-n="${i}" value="${esc(x.w)}" placeholder="${esc(phw)}">
-        <span class="x">×</span><input class="num" inputmode="numeric" data-i="sr" data-s="${sl.id}" data-n="${i}" value="${esc(x.r)}" placeholder="${esc(phr)}">
-        <button class="ck ${x.d ? 'on' : ''}" data-a="setck" data-v="${sl.id}" data-n="${i}" aria-label="Подход выполнен">✓</button></div>`;
-    }
-    body += `<div class="row" style="margin-top:12px"><button data-a="setadd" data-v="${sl.id}">+ подход</button><button data-a="setdel" data-v="${sl.id}">− подход</button>
-      ${sl.acc ? '' : `<button class="ghost" data-a="rows" data-v="${sl.id}">просто отметки</button>`}</div>`;
-  } else {
-    const n = Math.max(e.c.length, sl.sets);
-    let chips = ''; for (let i = 0; i < n; i++) chips += `<button class="chip ${e.c[i] ? 'on' : ''}" data-a="chip" data-v="${sl.id}" data-n="${i}">${i + 1}</button>`;
-    body += `<div class="row wrap" style="margin-top:8px"><input class="num" inputmode="decimal" data-i="aw" data-s="${sl.id}" value="${esc(e.w)}" placeholder="${ref && !isNaN(ref.aw) ? fw(ref.aw) : 'кг'}">${chips}
-      <button class="chip" data-a="chipadd" data-v="${sl.id}">+</button></div>
-      <button class="ghost" data-a="rows" data-v="${sl.id}" style="margin-top:4px">записать по подходам</button>`;
+  if (!e.sets.length && (e.c || []).some(Boolean)) e.sets = e.c.map(() => ({w: e.w || '', r: ''})); // старые отметки → подходы
+  const n = Math.max(e.sets.length, (tt && num(tt.s)) || 0, (!e.sets.length && ref && ref.sets.length) || 0, sl.sets);
+  body += `<div class="setr" style="margin-top:12px"><span class="i" style="background:none"></span><span class="sm hd">Вес, кг</span><span class="x" style="visibility:hidden">×</span><span class="sm hd">Повторы</span><span class="sm g1" style="text-align:right">${ref ? 'было' : ''}</span></div>`;
+  for (let i = 0; i < n; i++) {
+    const x = e.sets[i] || {w: '', r: ''}, prev = i ? e.sets[i - 1] : null;
+    const rs = ref && ref.sets.length ? (ref.sets[i] || null) : null;
+    const phw = prev && prev.w !== '' ? prev.w : tt && tt.w ? fw(num(tt.w)) : rs && !isNaN(rs.w) ? fw(rs.w) : (ref && !isNaN(ref.aw) ? fw(ref.aw) : '—');
+    const phr = tt && tt.r ? tt.r : rs ? rs.r : sl.rmin + '–' + sl.rmax;
+    const done = num(x.r) > 0;
+    body += `<div class="setr"><span class="i ${done ? 'on' : ''}">${i + 1}</span>
+      <input class="num" inputmode="decimal" data-i="sw" data-s="${sl.id}" data-n="${i}" value="${esc(x.w)}" placeholder="${esc(phw)}">
+      <span class="x">×</span><input class="num" inputmode="numeric" data-i="sr" data-s="${sl.id}" data-n="${i}" value="${esc(x.r)}" placeholder="${esc(phr)}">
+      <span class="sm g1" style="text-align:right;white-space:nowrap">${rs ? (isNaN(rs.w) ? 'с.в.' : fw(rs.w)) + ' × ' + rs.r : ''}</span></div>`;
   }
+  body += `<div class="row" style="margin-top:12px"><button data-a="setadd" data-v="${sl.id}">+ подход</button><button data-a="setdel" data-v="${sl.id}">− подход</button></div>`;
   body += `<input data-i="enote" data-s="${sl.id}" value="${esc(e.note)}" placeholder="Заметка: сам, добивка, по одной руке…" style="margin-top:12px;min-height:40px;font-size:14px;font-weight:500">`;
   const isExtra = s.extra.some(x => x.id === sl.id);
   if (isExtra) body += `<button class="ghost" data-a="delextra" data-v="${sl.id}" style="color:var(--h)">убрать из тренировки</button>`;
@@ -675,7 +670,7 @@ function applyPick(exId) {
 
 /* ========== Действия ========== */
 function curSess() { const w = P().weeks[wkIdx()], o = WOS(V.wid); return {w, o, s: sess(w, o.id, true), pl: w.plan[o.id] || {t: {}}}; }
-function touch(s) { if (!s.date) s.date = today(); if (!s.by) s.by = S.owner; }
+function touch(s) { if (!s.date) { s.date = today(); const d = document.querySelector('[data-i=sdate]'); if (d) d.value = s.date; } if (!s.by) s.by = S.owner; }
 function ent(sid) {
   const {o, s, pl} = curSess(); const sl = slotsOf(o, s).find(x => x.id === sid);
   if (!s.e[sid]) s.e[sid] = entry(s, pl, sl);
@@ -786,7 +781,11 @@ document.addEventListener('input', ev => {
   const t = ev.target, k = t.dataset.i; if (!k) return;
   const v = t.value, sid = t.dataset.s, wid = t.dataset.w;
   switch (k) {
-    case 'sw': case 'sr': { const {e, s} = ent(sid); const n = +t.dataset.n; while (e.sets.length <= n) e.sets.push({w: '', r: '', d: false}); e.sets[n][k === 'sw' ? 'w' : 'r'] = v; touch(s); break; }
+    case 'sw': case 'sr': { const {e, s} = ent(sid); const n = +t.dataset.n; while (e.sets.length <= n) e.sets.push({w: '', r: ''}); e.sets[n][k === 'sw' ? 'w' : 'r'] = v; touch(s);
+      const row = t.closest('.setr'); if (k === 'sw') refreshRow(row); else row.querySelector('.i').classList.toggle('on', num(v) > 0);
+      const all = [...document.querySelectorAll('[data-i=sr]')], d = all.filter(i => num(i.value) > 0).length, bar = document.querySelector('#app .bar i'), cnt = document.querySelector('#app .bar + .sm');
+      if (bar && cnt) { const m = cnt.textContent.match(/из (\d+)/); const tot = m ? +m[1] : all.length; bar.style.width = Math.round(d / tot * 100) + '%'; cnt.textContent = 'Подходов записано: ' + d + ' из ' + tot; }
+      break; }
     case 'aw': { const {e, s} = ent(sid); e.w = v; touch(s); break; }
     case 'enote': { const {e} = ent(sid); e.note = v; break; }
     case 'snote': { const {s} = curSess(); s.note = v; break; }
@@ -805,6 +804,16 @@ document.addEventListener('input', ev => {
   }
   save();
 });
+document.addEventListener('focusin', ev => {
+  const t = ev.target; if (t.dataset.i !== 'sw' || t.value !== '') return;
+  const ph = t.placeholder; if (isNaN(num(ph))) return;
+  t.value = ph; t.dispatchEvent(new Event('input', {bubbles: true})); setTimeout(() => t.select(), 0);
+  const r = t.parentNode.querySelector('[data-i=sr]'); if (r) refreshRow(t.parentNode);
+});
+function refreshRow(row) { // подсказка веса в следующем подходе = вес этого подхода
+  const nx = row.nextElementSibling; if (!nx || !nx.classList.contains('setr')) return;
+  const w = nx.querySelector('[data-i=sw]'), cur = row.querySelector('[data-i=sw]'); if (w && !w.value && cur.value) w.placeholder = cur.value;
+}
 document.addEventListener('change', ev => {
   const t = ev.target;
   if (t.dataset.i === 'sacc') { const sl = WO(t.dataset.w).slots.find(x => x.id === t.dataset.s); sl.acc = t.checked; save(); render(); }
