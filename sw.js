@@ -1,8 +1,8 @@
 // Сервис-воркер: свои файлы — сначала из сети (чтобы приходили обновления), без сети — из кэша.
 // Шрифты Google — из кэша, после первой загрузки работают без интернета.
-const CACHE = 'trenirovki-v5';
+const CACHE = 'trenirovki-v6';
 const FONTS = 'trenirovki-fonts';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './catalog.js'];
+const SHELL = ['./', './index.html', './manifest.webmanifest', './dumbbell-192.png', './dumbbell-512.png', './dumbbell-180.png', './catalog.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
