@@ -103,8 +103,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);back
 .wo{display:flex;gap:14px;align-items:flex-start}
 .wo .no{flex:none;width:52px;height:52px;border-radius:16px;background:var(--card2);font:700 18px/52px var(--fh);text-align:center;color:var(--tx2)}
 .wo .no.done{background:var(--ac);color:var(--on)}
-.wo .ex{font-size:14px;color:var(--tx2);margin-top:3px;display:flex;gap:6px;align-items:baseline}
-.wo .ex b{color:var(--tx);font-weight:700;white-space:nowrap}
+.wo .ex{font-size:14px;color:var(--tx2);margin-top:6px;display:block;overflow-wrap:anywhere}
+.wo .ex .g1{display:block}
+.wo .ex b{display:block;color:var(--tx);font-weight:700;font-size:13px;margin-top:1px}
 .acc{border-left:0;position:relative;overflow:hidden}
 .acc:before{content:"";position:absolute;left:0;top:16px;bottom:16px;width:4px;border-radius:0 4px 4px 0;background:var(--ac)}
 .tgt{font:600 12px var(--fh);color:var(--actx);background:var(--acbg);padding:5px 10px;border-radius:10px;white-space:nowrap}
