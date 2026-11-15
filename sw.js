@@ -1,6 +1,6 @@
 // Сервис-воркер: свои файлы — сначала из сети (чтобы приходили обновления), без сети — из кэша.
 // Шрифты Google — из кэша, после первой загрузки работают без интернета.
-const CACHE = 'trenirovki-v9';
+const CACHE = 'trenirovki-v10';
 const FONTS = 'trenirovki-fonts';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './dumbbell-192.png', './dumbbell-512.png', './dumbbell-180.png', './catalog.js', './muscles.js'];
 

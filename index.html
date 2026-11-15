@@ -118,11 +118,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);back
 .dy b{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 13px var(--fh);color:var(--tx2);background:var(--card2)}
 .dy.tr b{background:var(--ac);color:var(--on)}.dy.td b{box-shadow:0 0 0 2px var(--ac) inset}.dy.tr.td b{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ac)}
 .dy i{width:5px;height:5px;border-radius:50%;background:transparent}.dy i.ca{background:var(--m)}
-.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}.tiles.big3{grid-template-columns:repeat(3,1fr);margin:12px 0}
-.tiles>div{background:var(--card2);border-radius:14px;padding:10px 8px;text-align:center;min-width:0}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:16px}.tiles.big3{grid-template-columns:repeat(3,1fr);margin:12px 0}
+.tiles>div{background:var(--card2);border-radius:14px;padding:10px 3px;text-align:center;min-width:0;overflow:hidden}
 .tiles.big3>div{background:var(--card);border:1px solid var(--bd);box-shadow:var(--sh);padding:12px 8px}
 .tiles b{display:block;font:700 17px/1.2 var(--fh);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tiles b small{font-size:12px;color:var(--tx3);margin-left:1px}
-.tiles span{display:block;font-size:11px;color:var(--tx3);font-weight:600;margin-top:3px}
+.tiles span{display:block;font-size:10.5px;line-height:1.25;color:var(--tx3);font-weight:600;margin-top:3px;letter-spacing:-.01em;overflow-wrap:anywhere;hyphens:auto}
 .leg{display:flex;gap:14px;margin-top:12px;font-size:11.5px;color:var(--tx3);font-weight:600;flex-wrap:wrap}
 .leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:0}.leg .lt{background:var(--ac)}.leg .lc{background:var(--m)}
 .up{color:var(--ac)!important}.dl{font:700 12px var(--fb);padding:3px 8px;border-radius:8px;white-space:nowrap}.dl.up{background:var(--acbg);color:var(--actx)!important}.dl.dn{background:var(--hbg);color:var(--h)}
@@ -375,7 +375,7 @@ function rWeek() {
       <button class="arr" data-a="wk" data-v="1" ${last ? 'style="visibility:hidden"' : ''} aria-label="Следующая неделя">›</button></div>
     <div class="days">${days}</div>
     <div class="tiles">
-      <div><b>${done}<small>/${list.length}</small></b><span>тренировки</span></div>
+      <div><b>${done}<small>/${list.length}</small></b><span>трениров&shy;ки</span></div>
       <div><b>${ws.sets}</b><span>подходов</span></div>
       <div><b>${ws.ton ? fton(ws.ton) : '—'}</b><span>тоннаж</span></div>
       <div><b>${cmin}</b><span>мин кардио</span></div></div>
