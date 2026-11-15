@@ -108,10 +108,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);back
 .wo .ex b{display:block;color:var(--tx);font-weight:700;font-size:13px;margin-top:1px}
 .acc{border-left:0;position:relative;overflow:hidden}
 .acc:before{content:"";position:absolute;left:0;top:16px;bottom:16px;width:4px;border-radius:0 4px 4px 0;background:var(--ac)}
-.body .sil{fill:var(--sil)}.body .m{fill:var(--mus)}.body .m.p{fill:var(--mp)}.body .m.s{fill:var(--ms)}
+.body .sil{fill:var(--sil)}.body .m{fill:var(--mus);stroke:var(--sil);stroke-width:.35}.body .m.p{fill:var(--mp)}.body .m.s{fill:var(--ms)}
 .mini{flex:none;border:0;background:transparent;border-radius:14px;padding:0;min-height:0;line-height:0}
 .dots{flex:none;width:36px;height:36px;min-height:0;padding:0;border:0;border-radius:12px;background:var(--card2);color:var(--tx2);font-size:20px;line-height:1}
 .skipl{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border:1px dashed var(--bd2);border-radius:14px;margin-top:8px;color:var(--tx3)}
+.ml{margin:4px 0 0;padding-left:20px}.ml li{margin:3px 0}.ml a{color:var(--ac)}
 .tgt{font:600 12px var(--fh);color:var(--actx);background:var(--acbg);padding:5px 10px;border-radius:10px;white-space:nowrap}
 .stat{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px;box-shadow:var(--sh)}
 .stat .v{font:700 24px/1.2 var(--fh);margin:4px 0}
@@ -188,6 +189,7 @@ function seed() {
 const initials = n => (String(n || '?').trim()[0] || '?').toUpperCase();
 function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 1) return s; } catch (e) {} return seed(); }
 let S = load();
+for (const g in window.CATALOG) for (const nm of window.CATALOG[g]) if (!exByName(S.cat, nm)) { const id = uid(); S.cat[id] = {id, name: nm, g, step: 2.5}; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Не удалось сохранить: ' + e.message); } }
 save();
 try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
@@ -627,13 +629,16 @@ function renderSheet(keepFocus) {
   if (keepFocus) { const i = document.getElementById('pq'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
 }
 function sheetMus() {
-  const ex = EX(PK.ex), m = musclesFor(ex), nm = a => a.map(k => MUSCLE_NAMES[k]).join(', ');
+  const ex = EX(PK.ex), m = musclesFor(ex), li = a => a.map(k => `<li>${esc(MUSCLE_NAMES[k] || k)}</li>`).join('');
+  const refs = (m.r || []).map(k => MUSCLE_REFS[k]).filter(Boolean).map(([t, d]) => `<li><a href="${d.startsWith('PMC') ? 'https://pmc.ncbi.nlm.nih.gov/articles/' + d + '/' : 'https://doi.org/' + d}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join('');
   document.getElementById('sbox').innerHTML = `<div class="shd"><div class="grab"></div><div class="row sp"><b style="font:700 17px var(--fh)">${esc(ex.name)}</b><button class="ghost" data-a="sclose">Закрыть</button></div></div>
     <div style="display:flex;justify-content:center;margin:6px 0 4px">${bodySVG(m, 300)}</div>
     <div class="row sp sm" style="padding:0 18%"><span>спереди</span><span>сзади</span></div>
-    ${m.p.length ? `<p class="sec"><span style="color:var(--mp)">●</span> Целевые</p><p>${esc(nm(m.p))}</p>` : '<p class="mut">Для этого упражнения мышцы не указаны.</p>'}
-    ${m.s.length ? `<p class="sec"><span style="color:var(--ms)">●</span> Помогают</p><p>${esc(nm(m.s))}</p>` : ''}
-    <p class="sm" style="margin-top:16px">Схема упрощённая — для ориентира в зале.</p>`;
+    ${m.p.length ? `<p class="sec"><span style="color:var(--mp)">●</span> Основная нагрузка</p><ul class="ml">${li(m.p)}</ul>` : '<p class="mut">Для этого упражнения мышцы не указаны.</p>'}
+    ${m.s.length ? `<p class="sec"><span style="color:var(--ms)">●</span> Вспомогательные мышцы</p><ul class="ml">${li(m.s)}</ul>` : ''}
+    ${m.n ? `<p class="sec">Акцент</p><p>${esc(m.n)}</p>` : ''}
+    ${refs ? `<p class="sec">Источники (PubMed)</p><ul class="ml sm">${refs}</ul>` : ''}
+    <p class="sm" style="margin-top:16px">Схема упрощённая. ЭМГ (электромиография) показывает, насколько мышца включается, а не сколько она вырастет; работы с МРТ это и проверяют.</p>`;
 }
 function sheetSlotMenu() {
   const {o, s, pl} = curSess(), sl = slotsOf(o, s).find(x => x.id === PK.sid);
