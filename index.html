@@ -13,12 +13,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap&subset=cyrillic">
 <style>
-:root{--bg:#f3f4ef;--card:#fff;--card2:#eef0e9;--tx:#121512;--tx2:#545b55;--tx3:#8a918b;--bd:#e2e5dd;--bd2:#d0d5cc;
+:root{--sil:#dde2da;--mus:#b9c1b5;--mp:#e5484d;--ms:#f1aaa4;--bg:#f3f4ef;--card:#fff;--card2:#eef0e9;--tx:#121512;--tx2:#545b55;--tx3:#8a918b;--bd:#e2e5dd;--bd2:#d0d5cc;
 --ac:#0b8f63;--acbg:#d9f4e7;--actx:#055a3d;--on:#fff;
 --h:#d4462f;--hbg:#fde6e1;--m:#b0740a;--mbg:#fbefd2;--l:#3c8619;--lbg:#e4f3d6;
 --r:20px;--sh:0 1px 2px rgba(20,35,25,.04),0 6px 18px rgba(20,35,25,.06);
 --fh:"Unbounded",system-ui,sans-serif;--fb:"Manrope",system-ui,-apple-system,Roboto,sans-serif}
-@media (prefers-color-scheme:dark){:root{--bg:#0b0d0c;--card:#151917;--card2:#1e2320;--tx:#eef1ed;--tx2:#a3aba5;--tx3:#6c756e;--bd:#222825;--bd2:#2e3531;
+@media (prefers-color-scheme:dark){:root{--sil:#2b322e;--mus:#48524c;--mp:#ff5a52;--ms:#7d3633;--bg:#0b0d0c;--card:#151917;--card2:#1e2320;--tx:#eef1ed;--tx2:#a3aba5;--tx3:#6c756e;--bd:#222825;--bd2:#2e3531;
 --ac:#3ee39b;--acbg:#11382a;--actx:#93f2c6;--on:#04241a;
 --h:#ff7b66;--hbg:#3a1611;--m:#ffc451;--mbg:#372809;--l:#9ce370;--lbg:#1a330f;--sh:none}}
 *{box-sizing:border-box}
@@ -108,6 +108,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);back
 .wo .ex b{display:block;color:var(--tx);font-weight:700;font-size:13px;margin-top:1px}
 .acc{border-left:0;position:relative;overflow:hidden}
 .acc:before{content:"";position:absolute;left:0;top:16px;bottom:16px;width:4px;border-radius:0 4px 4px 0;background:var(--ac)}
+.body .sil{fill:var(--sil)}.body .m{fill:var(--mus)}.body .m.p{fill:var(--mp)}.body .m.s{fill:var(--ms)}
+.mini{flex:none;border:0;background:transparent;border-radius:14px;padding:0;min-height:0;line-height:0}
+.dots{flex:none;width:36px;height:36px;min-height:0;padding:0;border:0;border-radius:12px;background:var(--card2);color:var(--tx2);font-size:20px;line-height:1}
+.skipl{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border:1px dashed var(--bd2);border-radius:14px;margin-top:8px;color:var(--tx3)}
 .tgt{font:600 12px var(--fh);color:var(--actx);background:var(--acbg);padding:5px 10px;border-radius:10px;white-space:nowrap}
 .stat{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px;box-shadow:var(--sh)}
 .stat .v{font:700 24px/1.2 var(--fh);margin:4px 0}
@@ -119,6 +123,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);back
 <nav id="nav"></nav>
 <div id="sheet"><div class="box" id="sbox"></div></div>
 <script src="catalog.js"></script>
+<script src="muscles.js"></script>
 <script>
 'use strict';
 /* ========== Хранилище ========== */
@@ -340,7 +345,8 @@ function rWorkout() {
   const p = P(), wi = wkIdx(), w = p.weeks[wi], o = WOS(V.wid);
   if (!o) return '<p class="empty">Тренировка не найдена</p>';
   const s = sess(w, o.id, true), pl = w.plan[o.id] || {t: {}};
-  const all = slotsOf(o, s);
+  if (!s.skip) s.skip = {};
+  const all = slotsOf(o, s).filter(sl => !s.skip[sl.id]), skipped = slotsOf(o, s).filter(sl => s.skip[sl.id]);
   let dn = 0, tn = 0;
   for (const sl of all) { const e = s.e[sl.id]; if (!e) { tn += sl.sets; continue; }
     tn += Math.max(e.sets.length, sl.sets); dn += e.sets.filter(x => num(x.r) > 0).length; }
@@ -353,6 +359,7 @@ function rWorkout() {
   const acc = all.filter(x => x.acc), rest = all.filter(x => !x.acc);
   if (acc.length) h += `<p class="sec">Акцент</p>` + acc.map(sl => rSlot(p, w, wi, o, s, pl, sl)).join('');
   if (rest.length) h += `<p class="sec">Остальное</p>` + rest.map(sl => rSlot(p, w, wi, o, s, pl, sl)).join('');
+  if (skipped.length) h += `<p class="sec">Пропущено сегодня</p>` + skipped.map(sl => `<div class="skipl"><span>${esc(EX((s.e[sl.id] || entry(s, pl, sl)).ex).name)}</span><button class="ghost" data-a="unskip" data-v="${sl.id}">вернуть</button></div>`).join('');
   h += `<button class="big" data-a="addextra">+ Упражнение в эту тренировку</button>
     <p class="sec">Заметка</p><textarea data-i="snote" placeholder="Самочувствие, сон, что мешало">${esc(s.note)}</textarea>
     <button class="big ${s.done ? '' : 'pri'}" data-a="sdone">${s.done ? '✓ Завершена — отменить' : 'Завершить тренировку'}</button>
@@ -376,8 +383,11 @@ function rSlot(p, w, wi, o, s, pl, sl) {
     for (const x of hh) { const tp = topSet(x); if (tp && (!pr || tp.w > pr.w)) pr = tp; const b = bestE1(x); if (!isNaN(b) && (isNaN(be) || b > be)) be = b; }
     if (pr && pr.w) meta += `<p class="sm">Рекорд: ${fw(pr.w)} × ${pr.r}${isNaN(be) ? '' : ' · расчётный 1ПМ ≈ ' + fw(Math.round(be * 2) / 2)}</p>`;
   }
-  const head = `<div class="row sp" style="align-items:flex-start"><button class="exn g1" data-a="pick" data-v="${sl.id}" aria-label="Заменить упражнение"><span class="g1">${esc(ex.name)}</span><span class="sw">${SWAP}</span></button>
-    ${tt && (tt.w || tt.r) ? `<span class="tgt">${esc(tgt(tt))}</span>` : `<span class="pill nt">${sl.sets} × ${sl.rmin}–${sl.rmax}</span>`}</div>`;
+  const head = `<div class="row" style="align-items:flex-start;gap:12px">
+    <button class="mini" data-a="mus" data-v="${e.ex}" aria-label="Какие мышцы работают">${bodySVG(musclesFor(ex), 92)}</button>
+    <div class="g1"><button class="exn" data-a="pick" data-v="${sl.id}" aria-label="Заменить упражнение"><span>${esc(ex.name)}</span><span class="sw">${SWAP}</span></button>
+    <div style="margin-top:6px">${tt && (tt.w || tt.r) ? `<span class="tgt">цель ${esc(tgt(tt))}</span>` : `<span class="pill nt">${sl.sets} × ${sl.rmin}–${sl.rmax}</span>`}</div></div>
+    <button class="dots" data-a="smenu" data-v="${sl.id}" aria-label="Убрать или пропустить">⋯</button></div>`;
   let body = '';
   if (!e.sets.length && (e.c || []).some(Boolean)) e.sets = e.c.map(() => ({w: e.w || '', r: ''})); // старые отметки → подходы
   const n = Math.max(e.sets.length, (tt && num(tt.s)) || 0, (!e.sets.length && ref && ref.sets.length) || 0, sl.sets);
@@ -395,8 +405,6 @@ function rSlot(p, w, wi, o, s, pl, sl) {
   }
   body += `<div class="row" style="margin-top:12px"><button data-a="setadd" data-v="${sl.id}">+ подход</button><button data-a="setdel" data-v="${sl.id}">− подход</button></div>`;
   body += `<input data-i="enote" data-s="${sl.id}" value="${esc(e.note)}" placeholder="Заметка: сам, добивка, по одной руке…" style="margin-top:12px;min-height:40px;font-size:14px;font-weight:500">`;
-  const isExtra = s.extra.some(x => x.id === sl.id);
-  if (isExtra) body += `<button class="ghost" data-a="delextra" data-v="${sl.id}" style="color:var(--h)">убрать из тренировки</button>`;
   return `<div class="card${sl.acc ? ' acc' : ''}">${head}${meta}${body}</div>`;
 }
 
@@ -575,10 +583,12 @@ function pickerSlot() {
 }
 function renderSheet(keepFocus) {
   if (PK.mode === 'addwo') return sheetAddWo();
+  if (PK.mode === 'mus') return sheetMus();
+  if (PK.mode === 'smenu') return sheetSlotMenu();
   if (PK.mode === 'cardio') return sheetCardio();
   const sl = pickerSlot(), q = PK.q.trim().toLowerCase();
   const titles = {entry: 'Заменить упражнение', plan: 'Упражнение на неделю', alt: 'Добавить замену', swap: 'Основное упражнение', addslot: 'Добавить в программу', extra: 'Добавить в тренировку'};
-  const item = (id, cls = '') => `<button class="li ${cls} ${id === PK.cur ? 'cur' : ''}" data-a="pk" data-v="${id}"><span>${esc(EX(id).name)}</span>${id === PK.cur ? '<span class="sm" style="color:inherit">сейчас</span>' : sl && id === sl.ex ? '<span class="sm">основное</span>' : ''}</button>`;
+  const item = (id, cls = '') => `<button class="li ${cls} ${id === PK.cur ? 'cur' : ''}" data-a="pk" data-v="${id}"><span class="g1">${esc(EX(id).name)}${id === PK.cur ? '<br><span class="sm" style="color:inherit">сейчас</span>' : sl && id === sl.ex ? '<br><span class="sm">основное</span>' : ''}</span>${bodySVG(musclesFor(EX(id)), 60)}</button>`;
   let h = `<div class="shd"><div class="grab"></div><div class="row sp"><b style="font:700 17px var(--fh)">${titles[PK.mode]}</b><button class="ghost" data-a="sclose">Готово</button></div>
     <input id="pq" data-i="pq" value="${esc(PK.q)}" placeholder="Поиск: жим, присед, бицепс…" style="margin-top:10px" autocomplete="off"></div>`;
   const byGroup = ids => { const g = {}; for (const id of ids) { const k = S.cat[id].g || 'Другое'; (g[k] = g[k] || []).push(id); } for (const k in g) g[k].sort((x, y) => EX(x).name.localeCompare(EX(y).name, 'ru')); return g; };
@@ -615,6 +625,26 @@ function renderSheet(keepFocus) {
   else h += `<button class="big" data-a="pknw">+ Своё упражнение</button>`;
   const box = document.getElementById('sbox'); box.innerHTML = h;
   if (keepFocus) { const i = document.getElementById('pq'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+}
+function sheetMus() {
+  const ex = EX(PK.ex), m = musclesFor(ex), nm = a => a.map(k => MUSCLE_NAMES[k]).join(', ');
+  document.getElementById('sbox').innerHTML = `<div class="shd"><div class="grab"></div><div class="row sp"><b style="font:700 17px var(--fh)">${esc(ex.name)}</b><button class="ghost" data-a="sclose">Закрыть</button></div></div>
+    <div style="display:flex;justify-content:center;margin:6px 0 4px">${bodySVG(m, 300)}</div>
+    <div class="row sp sm" style="padding:0 18%"><span>спереди</span><span>сзади</span></div>
+    ${m.p.length ? `<p class="sec"><span style="color:var(--mp)">●</span> Целевые</p><p>${esc(nm(m.p))}</p>` : '<p class="mut">Для этого упражнения мышцы не указаны.</p>'}
+    ${m.s.length ? `<p class="sec"><span style="color:var(--ms)">●</span> Помогают</p><p>${esc(nm(m.s))}</p>` : ''}
+    <p class="sm" style="margin-top:16px">Схема упрощённая — для ориентира в зале.</p>`;
+}
+function sheetSlotMenu() {
+  const {o, s, pl} = curSess(), sl = slotsOf(o, s).find(x => x.id === PK.sid);
+  if (!sl) { closeSheet(); return; }
+  const e = s.e[sl.id] || entry(s, pl, sl), isExtra = s.extra.some(x => x.id === sl.id);
+  let h = `<div class="shd"><div class="grab"></div><b style="font:700 17px var(--fh)">${esc(EX(e.ex).name)}</b></div>`;
+  if (isExtra) h += `<button class="big" data-a="delextra" data-v="${sl.id}" style="color:var(--h)">Убрать из этой тренировки</button>`;
+  else h += `<button class="big" data-a="skip" data-v="${sl.id}">Пропустить сегодня</button><p class="sm" style="margin-top:6px">Только в этой тренировке, программа не меняется.</p>
+    <button class="big" data-a="sremove" data-v="${sl.id}" style="color:var(--h)">Убрать из программы</button><p class="sm" style="margin-top:6px">Упражнения больше не будет в «${esc(o.focus || o.name)}». Прошлые записи останутся в истории и графиках.</p>`;
+  h += `<button class="big ghost" data-a="sclose">Отмена</button>`;
+  document.getElementById('sbox').innerHTML = h;
 }
 function sheetAddWo() {
   const p = P(), w = p.weeks[wkIdx()];
@@ -704,7 +734,7 @@ document.addEventListener('click', ev => {
     case 'chipadd': { const {e, sl} = ent(v); while (e.c.length < sl.sets) e.c.push(false); e.c.push(false); break; }
     case 'pick': { const {e} = ent(v); openPicker({mode: 'entry', wid: V.wid, sid: v, cur: e.ex}); return; }
     case 'addextra': openPicker({mode: 'extra'}); return;
-    case 'delextra': { const {s} = curSess(); s.extra = s.extra.filter(x => x.id !== v); delete s.e[v]; break; }
+    case 'delextra': { const {s} = curSess(); s.extra = s.extra.filter(x => x.id !== v); delete s.e[v]; closeSheet(); break; }
     case 'sdone': { const {s} = curSess(); s.done = !s.done; touch(s); save(); if (s.done) { toast('Тренировка сохранена'); history.back(); return; } break; }
     case 'pk': applyPick(v); return;
     case 'pknew': {
@@ -713,6 +743,13 @@ document.addEventListener('click', ev => {
       applyPick(id); return;
     }
     case 'sclose': closeSheet(); return;
+    case 'mus': openPicker({mode: 'mus', ex: v}); return;
+    case 'smenu': openPicker({mode: 'smenu', sid: v}); return;
+    case 'skip': { const {s} = curSess(); (s.skip = s.skip || {})[v] = true; closeSheet(); break; }
+    case 'unskip': { const {s} = curSess(); if (s.skip) delete s.skip[v]; break; }
+    case 'sremove': { const o = WO(V.wid); if (!o) return; const sl = o.slots.find(x => x.id === v); if (!sl) return;
+      if (!confirm('Убрать «' + EX(sl.ex).name + '» из «' + (o.focus || o.name) + '» насовсем?')) return;
+      o.slots = o.slots.filter(x => x.id !== v); closeSheet(); toast('Убрано из программы'); break; }
     case 'suown': V.setupOwner = v; { const a1 = document.getElementById('su1').value, a2 = document.getElementById('su2').value; render(); document.getElementById('su1').value = a1; document.getElementById('su2').value = a2; } return;
     case 'setupdone': {
       const a1 = document.getElementById('su1').value.trim(), a2 = document.getElementById('su2').value.trim();
