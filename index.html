@@ -153,6 +153,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);back
 @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
 #app.anim{animation:fadeup .22s ease-out}@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#app.anim,.ok,#sheet .box{animation:none}}
+.steps{margin:12px 0;padding-left:20px;font-size:14px;color:var(--tx2)}.steps li{margin:6px 0}.steps code{font-size:12.5px;background:var(--card2);padding:1px 5px;border-radius:5px;color:var(--tx)}.steps a{color:var(--ac)}
+.hrt{color:var(--h)}.stv{color:#fc4c02;font-weight:700}.wl{font-size:13px;color:var(--tx2);margin-top:8px;font-weight:600}
+.watch{background:var(--card2);border-radius:14px;padding:10px 14px;margin-top:10px}.watch p{font-weight:700;margin-top:2px}.watch>div+div{margin-top:8px}
 .tgt{font:600 12px var(--fh);color:var(--actx);background:var(--acbg);padding:5px 10px;border-radius:10px;white-space:nowrap}
 .stat{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px;box-shadow:var(--sh)}
 .stat .v{font:700 24px/1.2 var(--fh);margin:4px 0}
@@ -394,7 +397,7 @@ function rWeek() {
       <div class="no ${s && s.done ? 'done' : ''}">${s && s.done ? '✓' : String(i + 1).padStart(2, '0')}</div>
       <div class="g1"><div class="row sp" style="align-items:flex-start"><p style="font-weight:800;font-size:17px">${esc(o.focus || o.name)}</p><span class="pill ${type}">${TYPES[type]}</span></div>
       ${o.focus ? `<p class="sm">${esc(o.name)}</p>` : ''}
-      <div style="margin:8px 0 ${st ? '10px' : '0'}">${acc || (o.free ? freeSum(s) : '<p class="sm">Акцентные упражнения не выбраны</p>')}</div>${st}</div></div></div>`;
+      <div style="margin:8px 0 ${st ? '10px' : '0'}">${acc || (o.free ? freeSum(s) : '<p class="sm">Акцентные упражнения не выбраны</p>')}</div>${st}${s && s.date && watchFor(p, s.date).length ? `<p class="wl">${watchFor(p, s.date).map(watchLine).join('<br>')}</p>` : ''}</div></div></div>`;
   });
   h += `<button class="big" data-a="addwo">+ Тренировка</button>`;
   const lastC = cardio[cardio.length - 1] || (wi ? (p.weeks[wi - 1].cardio || []).slice(-1)[0] : null);
@@ -402,7 +405,7 @@ function rWeek() {
     <div class="row sp"><div><p style="font:700 22px var(--fh)">${cmin} <span class="sm">мин</span></p><p class="sm">${cardio.length} раз${ckm ? ' · ' + fw(Math.round(ckm * 10) / 10) + ' км' : ''} за неделю</p></div>
     <button data-a="cadd">+ Кардио</button></div>
     ${lastC ? `<button class="big" data-a="crep" style="margin-top:10px">Повторить: ${esc(lastC.kind)} ${esc(lastC.min)} мин${lastC.km ? ', ' + esc(lastC.km) + ' км' : ''} — сегодня</button>` : ''}
-    ${cardio.slice().reverse().map(c => `<div class="row sp" style="border-top:1px solid var(--bd);margin-top:10px;padding-top:10px"><span class="g1"><b>${esc(c.kind)}</b> · ${esc(c.min)} мин${c.km ? ' · ' + esc(c.km) + ' км' : ''}<br><span class="sm">${esc(fdate(c.date))}${c.note ? ' · ' + esc(c.note) : ''}</span></span><button class="ghost" data-a="cdel" data-v="${c.id}" aria-label="Удалить" style="color:var(--tx3)">✕</button></div>`).join('')}</div>`;
+    ${cardio.slice().reverse().map(c => `<div class="row sp" style="border-top:1px solid var(--bd);margin-top:10px;padding-top:10px"><span class="g1"><b>${esc(c.kind)}</b> · ${esc(c.min)} мин${c.km ? ' · ' + esc(c.km) + ' км' : ''}<br><span class="sm">${esc(fdate(c.date))}${c.hr ? ` · <span class="hrt">♥</span> ${c.hr}${c.hrmax ? '/' + c.hrmax : ''}` : ''}${c.note ? ' · ' + esc(c.note) : ''}${c.src === 'strava' ? ' · <span class="stv">Strava</span>' : ''}</span></span><button class="ghost" data-a="cdel" data-v="${c.id}" aria-label="Удалить" style="color:var(--tx3)">✕</button></div>`).join('')}</div>`;
   h += `<button class="big" data-a="planwk" data-v="edit">Цели этой недели</button>`;
   if (last) h += `<button class="big pri" data-a="planwk" data-v="next">Спланировать неделю ${w.n + 1}</button>`;
   return h;
@@ -425,7 +428,8 @@ function rWorkout() {
     <div class="bar" style="margin-top:10px"><i style="width:${tn ? Math.round(dn / tn * 100) : 0}%"></i></div>
     <p class="sm" style="margin-top:6px">Подходов записано: ${dn} из ${tn}</p>
     <div class="seg t" style="margin:14px 0 10px">${Object.keys(TYPES).map(k => `<button data-a="stype" data-v="${k}" class="${s.type === k ? 'on ' + k : ''}">${TYPES[k]}</button>`).join('')}</div>
-    <div class="row"><span class="mut" style="width:48px">Дата</span><input type="date" data-i="sdate" value="${esc(s.date)}" style="max-width:200px"></div>`;
+    <div class="row"><span class="mut" style="width:48px">Дата</span><input type="date" data-i="sdate" value="${esc(s.date)}" style="max-width:200px"></div>
+    ${s.date && watchFor(p, s.date).length ? `<div class="watch">${watchFor(p, s.date).map(x => `<div><span class="lbl">С часов${x.name ? ' · ' + esc(x.name) : ''}</span><p>${watchLine(x)}</p></div>`).join('')}</div>` : ''}`;
   const acc = all.filter(x => x.acc), rest = all.filter(x => !x.acc);
   if (acc.length) h += `<p class="sec">Акцент</p>` + acc.map(sl => rSlot(p, w, wi, o, s, pl, sl)).join('');
   if (rest.length) h += `<p class="sec">Остальное</p>` + rest.map(sl => rSlot(p, w, wi, o, s, pl, sl)).join('');
@@ -643,11 +647,30 @@ function rProgram() {
 let installEv = null;
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEv = e; if (V.tab === 'more') render(); });
 const IC = {
+  watch: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 9.5V12l1.5 1"/></svg>',
   save: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
   load: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9M7 14l5-5 5 5M5 3h14"/></svg>',
   xls: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg>',
   phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>'
 };
+function rStrava() {
+  const c = STV.get(S.active), nm = esc(P().name);
+  if (c && c.rt) return `<p class="sec">Часы · Strava</p><div class="card" style="padding:4px 16px">
+    <div class="lrow"><span class="ib" style="background:#fc4c0222;color:#fc4c02">${IC.watch}</span><div class="g1"><b>Strava подключена</b><br><span class="sm">${esc(c.ath || nm)} · профиль «${nm}»${c.last ? ' · обновлено ' + new Date(c.last).toLocaleString('ru-RU', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) : ''}</span></div></div>
+    <button class="lrow" data-a="stvsync"><span class="ib">${IC.load}</span><span class="g1"><b>Загрузить сейчас</b><br><span class="sm">Сам загружается при открытии, раз в 20 минут</span></span><span class="chev">›</span></button>
+    <button class="lrow" data-a="stvoff"><span class="ib" style="background:var(--hbg);color:var(--h)">✕</span><span class="g1"><b>Отключить</b><br><span class="sm">Уже загруженные тренировки останутся</span></span></button></div>`;
+  return `<p class="sec">Часы · Strava</p><div class="card">
+    <div class="row" style="gap:12px;align-items:flex-start"><span class="ib" style="background:#fc4c0222;color:#fc4c02">${IC.watch}</span><div class="g1"><b>Тренировки с часов</b><p class="sm">Huawei Health → Strava → сюда: кардио с минутами, километрами и пульсом, а у силовых — время и пульс.</p></div></div>
+    <ol class="steps">
+      <li>В Huawei Health: «Я» → «Привязка аккаунтов» (или «Сервисы») → Strava → войти.</li>
+      <li>На сайте <a href="https://www.strava.com/settings/api" target="_blank" rel="noopener">strava.com/settings/api</a> создай приложение: любое название, Website — <code>https://ligovec.github.io</code>, Authorization Callback Domain — <code>ligovec.github.io</code>.</li>
+      <li>Скопируй оттуда Client ID и Client Secret сюда и нажми «Подключить».</li></ol>
+    <input id="stcid" inputmode="numeric" placeholder="Client ID" value="${esc(c ? c.cid : '')}" autocomplete="off">
+    <input id="stsec" placeholder="Client Secret" value="${esc(c ? c.sec : '')}" autocomplete="off" style="margin-top:8px">
+    <p id="sterr" class="sm" style="color:var(--h);margin-top:6px"></p>
+    <button class="big" data-a="stvgo" style="background:#fc4c02;border-color:#fc4c02;color:#fff">Подключить Strava для «${nm}»</button>
+    <p class="sm" style="margin-top:8px">Ключи хранятся только на этом телефоне и не попадают в резервную копию.</p></div>`;
+}
 function rMore() {
   return `<h1 style="margin-top:8px">Настройки</h1>
     ${installEv ? '<button class="big pri" data-a="install">Установить на телефон</button>' : ''}
@@ -655,13 +678,14 @@ function rMore() {
       <div class="g1"><p class="sm">${i ? 'Партнёр' : 'Ты'}</p><input class="ttl sm2" data-i="pname" data-v="${id}" value="${esc(S.profiles[id].name)}"></div></div>`).join('')}</div>
     <p class="sec">Этот телефон</p><div class="card" style="padding:4px 16px"><div class="lrow"><span class="ib">${IC.phone}</span><div class="g1"><p style="font-weight:700">Чей телефон</p><p class="sm">Видно, кто внёс тренировку</p></div>
       <select data-i="owner" style="width:auto;min-width:110px">${S.order.map(id => `<option value="${id}" ${S.owner === id ? 'selected' : ''}>${esc(S.profiles[id].name)}</option>`).join('')}</select></div></div>
+    ${rStrava()}
     <p class="sec">Данные</p><div class="card" style="padding:4px 16px">
       <button class="lrow" data-a="export"><span class="ib">${IC.save}</span><span class="g1"><b>Сохранить копию</b><br><span class="sm">Файл .json — раз в неделю, на всякий случай</span></span><span class="chev">›</span></button>
       <button class="lrow" data-a="import"><span class="ib">${IC.load}</span><span class="g1"><b>Восстановить из копии</b><br><span class="sm">Заменит данные на этом телефоне</span></span><span class="chev">›</span></button>
       <button class="lrow" data-a="csv"><span class="ib">${IC.xls}</span><span class="g1"><b>Таблица для Excel</b><br><span class="sm">Все подходы и кардио в одном файле</span></span><span class="chev">›</span></button></div>
     <p class="mut" style="margin-top:12px">Данные хранятся только на этом телефоне, пока нет синхронизации.</p>
     <input type="file" id="file" accept=".json,application/json" style="display:none">
-    <p class="sm" style="margin-top:28px;text-align:center">Дневник тренировок · версия 6</p>`;
+    <p class="sm" style="margin-top:28px;text-align:center">Дневник тренировок · версия 7</p>`;
 }
 
 /* ========== Выбор упражнения (нижняя шторка) ========== */
@@ -905,6 +929,15 @@ document.addEventListener('click', ev => {
       return;
     }
     case 'metric': V.metric = v; render(); return;
+    case 'stvgo': {
+      const cid = document.getElementById('stcid').value.trim(), sec = document.getElementById('stsec').value.trim();
+      if (!/^\d+$/.test(cid) || sec.length < 20) { document.getElementById('sterr').textContent = 'Проверь Client ID (только цифры) и Client Secret'; return; }
+      STV.put(S.active, {cid, sec});
+      location.href = 'https://www.strava.com/oauth/mobile/authorize?' + new URLSearchParams({client_id: cid, redirect_uri: STV.redirect(), response_type: 'code', approval_prompt: 'auto', scope: 'activity:read_all', state: S.active});
+      return;
+    }
+    case 'stvsync': stvSync(S.active, true); return;
+    case 'stvoff': if (!confirm('Отключить Strava на этом телефоне? Ключи будут удалены, загруженные тренировки останутся.')) return; STV.put(S.active, null); render(); return;
     case 'pex': V.ex = v; render(); return;
     case 'sedit': V.edit = V.edit === v ? null : v; render(); return;
     case 'sadd': openPicker({mode: 'addslot', wid: v}); return;
@@ -988,13 +1021,103 @@ function csv() {
       for (const sid in s.e) { const e = s.e[sid], base = [p.name, w.n, o ? o.name : '', s.date, TYPES[s.type], EX(e.ex).name];
         if (e.sets && e.sets.length) e.sets.forEach((x, i) => rows.push(base.concat([i + 1, x.w, x.r, x.d ? 'да' : '', e.note])));
         else (e.c || []).forEach((c, i) => rows.push(base.concat([i + 1, e.w, '', c ? 'да' : '', e.note]))); } } }
-  for (const id of S.order) for (const w of S.profiles[id].weeks) for (const c of (w.cardio || [])) rows.push([S.profiles[id].name, w.n, 'Кардио', c.date, '', c.kind, '', c.km ? c.km + ' км' : '', c.min + ' мин', '', c.note || '']);
+  for (const id of S.order) for (const w of S.profiles[id].weeks) for (const c of (w.cardio || [])) rows.push([S.profiles[id].name, w.n, 'Кардио', c.date, '', c.kind, '', c.km ? c.km + ' км' : '', c.min + ' мин', c.hr ? 'пульс ' + c.hr + (c.hrmax ? '/' + c.hrmax : '') : '', c.note || '']);
   return rows.map(r => r.map(c => '"' + String(c ?? '').replace(/"/g, '""') + '"').join(';')).join('\r\n');
 }
+
+/* ========== Strava (данные с часов через Huawei Health → Strava) ========== */
+// Ключи и токены хранятся отдельно от дневника: только на этом телефоне, не попадают в копию и в GitHub.
+const SKEY = 'trenirovki.strava';
+const STV = {
+  all() { try { return JSON.parse(localStorage.getItem(SKEY)) || {}; } catch (e) { return {}; } },
+  get(pid) { return this.all()[pid] || null; },
+  put(pid, v) { const a = this.all(); if (v) a[pid] = v; else delete a[pid]; try { localStorage.setItem(SKEY, JSON.stringify(a)); } catch (e) {} },
+  redirect() { return location.origin + location.pathname; }
+};
+const SPORT = {Walk: 'Ходьба', Hike: 'Ходьба', Run: 'Бег', TrailRun: 'Бег', VirtualRun: 'Бег', Ride: 'Велосипед', VirtualRide: 'Велосипед', EBikeRide: 'Велосипед',
+  MountainBikeRide: 'Велосипед', GravelRide: 'Велосипед', Swim: 'Плавание', Elliptical: 'Эллипс', StairStepper: 'Другое', Rowing: 'Другое', Yoga: 'Другое', Pilates: 'Другое'};
+const STRENGTH = ['WeightTraining', 'Workout', 'Crossfit', 'HighIntensityIntervalTraining'];
+async function stvToken(pid) {
+  const c = STV.get(pid); if (!c || !c.rt) throw new Error('Strava не подключена');
+  if (c.exp && c.exp > Date.now() / 1000 + 120) return c.at;
+  const r = await fetch('https://www.strava.com/oauth/token', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({client_id: c.cid, client_secret: c.sec, grant_type: 'refresh_token', refresh_token: c.rt})});
+  if (!r.ok) throw new Error('Strava не обновила вход (' + r.status + '). Подключи заново.');
+  const j = await r.json(); Object.assign(c, {at: j.access_token, rt: j.refresh_token, exp: j.expires_at}); STV.put(pid, c); return c.at;
+}
+async function stvExchange(pid, code) {
+  const c = STV.get(pid); if (!c) throw new Error('Нет Client ID и Client Secret');
+  const r = await fetch('https://www.strava.com/oauth/token', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({client_id: c.cid, client_secret: c.sec, code, grant_type: 'authorization_code'})});
+  if (!r.ok) throw new Error('Strava не приняла код (' + r.status + '). Проверь Client ID и Secret.');
+  const j = await r.json(); Object.assign(c, {at: j.access_token, rt: j.refresh_token, exp: j.expires_at, ath: j.athlete ? [j.athlete.firstname, j.athlete.lastname].filter(Boolean).join(' ') : '', last: 0});
+  STV.put(pid, c);
+}
+function weekForDate(p, iso) { let k = 0; p.weeks.forEach((w, i) => { if ((w.created || '') <= iso) k = i; }); return p.weeks[k]; }
+function stvApply(p, acts) {
+  let added = 0, upd = 0;
+  for (const a of acts) {
+    const date = (a.start_date_local || '').slice(0, 10); if (!date) continue;
+    const min = String(Math.round((a.moving_time || a.elapsed_time || 0) / 60)), km = a.distance > 50 ? fw(Math.round(a.distance / 100) / 10) : '';
+    const hr = a.has_heartrate && a.average_heartrate ? Math.round(a.average_heartrate) : '', hrmax = a.has_heartrate && a.max_heartrate ? Math.round(a.max_heartrate) : '';
+    const sid = String(a.id), w = weekForDate(p, date);
+    if (STRENGTH.includes(a.sport_type || a.type)) {
+      const all = p.weeks.flatMap(x => x.watch || []); const ex = all.find(x => x.sid === sid);
+      const v = {sid, date, min: String(Math.round((a.elapsed_time || a.moving_time || 0) / 60)), hr, hrmax, name: a.name || ''};
+      if (ex) { Object.assign(ex, v); upd++; } else { (w.watch = w.watch || []).push(v); added++; }
+      continue;
+    }
+    const kind = SPORT[a.sport_type || a.type] || 'Другое';
+    let ex = null; for (const x of p.weeks) for (const c of (x.cardio || [])) if (c.sid === sid) ex = c;
+    if (!ex) for (const c of (w.cardio || [])) if (!c.sid && c.date === date && c.kind === kind) { ex = c; break; }
+    const v = {sid, src: 'strava', kind, min, km, date, hr, hrmax};
+    if (ex) { Object.assign(ex, v); upd++; } else { (w.cardio = w.cardio || []).push(Object.assign({id: uid(), note: a.name || '', by: S.owner}, v)); added++; }
+  }
+  return {added, upd};
+}
+let stvBusy = false;
+async function stvSync(pid, loud) {
+  const c = STV.get(pid); if (!c || !c.rt || stvBusy) return;
+  stvBusy = true;
+  try {
+    const tok = await stvToken(pid), p = S.profiles[pid];
+    const first = Math.min(...p.weeks.map(w => +new Date((w.created || today()) + 'T00:00')));
+    const after = Math.floor(Math.max(first - 7 * 864e5, (c.last || 0) - 7 * 864e5) / 1000);
+    let page = 1, acts = [];
+    for (;;) {
+      const r = await fetch(`https://www.strava.com/api/v3/athlete/activities?after=${after}&per_page=100&page=${page}`, {headers: {Authorization: 'Bearer ' + tok}});
+      if (r.status === 429) throw new Error('Strava просит подождать 15 минут (лимит запросов)');
+      if (!r.ok) throw new Error('Strava ответила ошибкой ' + r.status);
+      const j = await r.json(); acts = acts.concat(j); if (j.length < 100 || page > 5) break; page++;
+    }
+    S = load(); const res = stvApply(S.profiles[pid], acts); save();
+    const c2 = STV.get(pid); c2.last = Date.now(); STV.put(pid, c2);
+    if (loud || res.added) toast(res.added ? `Из Strava: новых ${res.added}` : 'Из Strava: новых тренировок нет');
+    render();
+  } catch (e) { if (loud) toast(e.message); }
+  finally { stvBusy = false; }
+}
+function stvAuto() { const c = STV.get(S.active); if (c && c.rt && Date.now() - (c.last || 0) > 20 * 6e4) stvSync(S.active); }
+// возврат со страницы Strava: ?code=…&state=p1
+async function stvCallback() {
+  const q = new URLSearchParams(location.search); if (!q.has('state') || !(q.has('code') || q.has('error'))) return false;
+  history.replaceState(null, '', STV.redirect());
+  const pid = q.get('state');
+  if (q.get('error') || !(q.get('scope') || '').includes('activity:read')) { toast('Strava: доступ к тренировкам не выдан'); return false; }
+  try { await stvExchange(pid, q.get('code')); toast('Strava подключена'); S.active = pid; save(); await stvSync(pid, true); }
+  catch (e) { toast(e.message); }
+  return true;
+}
+function watchFor(p, date) { const r = []; for (const w of p.weeks) for (const x of (w.watch || [])) if (x.date === date) r.push(x); return r; }
+const watchLine = x => `⌚ ${esc(x.min)} мин${x.hr ? ` · <span class="hrt">♥</span> ${x.hr}${x.hrmax ? '/' + x.hrmax : ''}` : ''}`;
+// изменения из другой вкладки (например, после входа в Strava)
+addEventListener('storage', e => { if (e.key === KEY) { S = load(); render(); } else if (e.key === SKEY) { render(); stvAuto(); } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') stvAuto(); });
 
 /* ========== Старт ========== */
 history.replaceState(V, '');
 render();
+stvCallback().then(done => { if (!done) stvAuto(); });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
